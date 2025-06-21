@@ -83,9 +83,4 @@ resources:
                   Resource:
                     - Fn::Sub: 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
 
-#outputs:
-#  expressApi:
-#    description: API Gateway endpoint URL for Express function
-#    value:
-#      Fn::Sub: "https://${sls:instanceId}.execute-api.${AWS::Region}.${AWS::URLSuffix}/"
 
