@@ -153,3 +153,4 @@ MIT
 docker build -t myapp:v1.0 .
 docker run -ti myapp:v1.0 sh
 docker run --rm -p 8080:8080 myapp:v1.0
+node --env-file .env.local dist/client/greet/greet-streamable-client.js

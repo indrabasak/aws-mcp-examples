@@ -11,15 +11,18 @@ process.on('SIGTERM', async () => {
 
   console.info('[express] cleaning up');
   // perform actual clean up work here.
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   console.info('[express] exiting');
-  process.exit(0)
+  process.exit(0);
 });
 
 app.get('/', (req, res) => {
   console.log('Received request to /');
-  res.json({ message: 'Hello from Express with Lambda Web Adapter!', timestamp: new Date().toISOString() });
+  res.json({
+    message: 'Hello from Express with Lambda Web Adapter!',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.get('/health', (req, res) => {

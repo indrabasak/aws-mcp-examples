@@ -1,4 +1,5 @@
 FROM public.ecr.aws/docker/library/node:20-slim
+#FROM public.ecr.aws/lambda/nodejs:20
 
 # Copy Lambda Web Adapter
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
@@ -10,6 +11,8 @@ WORKDIR "/var/task"
 
 ## Enable Corepack for Yarn 4 support
 RUN corepack enable
+
+#RUN npm install -g yarn
 
 # Install TypeScript globally
 RUN npm install -g typescript
@@ -23,10 +26,11 @@ COPY package.json ./
 COPY yarn.lock ./
 
 ## Install all dependencies (including dev dependencies for building)
-RUN yarn install --immutable
+RUN yarn install
 
 # Build the TypeScript code
 RUN yarn build
 
 # Set the Lambda handler
-CMD ["node", "dist/simple-app"]
+#CMD ["node", "dist/simple-app"]
+CMD ["node", "dist/server/greet/stateless-index.js"]

@@ -1,4 +1,4 @@
-service: aws-mcp-examples
+service: mcp-examples
 
 frameworkVersion: '3'
 
@@ -6,21 +6,23 @@ provider:
   name: aws
   stage: ${opt:stage, 'dev'}
   region: us-west-2
-  architecture: arm64
+#  architecture: arm64
+  architecture: x86_64
   timeout: 30
   environment:
     NODE_ENV: ${self:provider.stage}
     STAGE: ${self:provider.stage}
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
   cfnRole: arn:aws:iam::${aws:accountId}:role/AdskCfnAdministratorAccessExecutionRole
   ecr:
     images:
       appimage:
         path: ./
-        platform: linux/arm64
+#        platform: linux/arm64
+        platform: linux/x86_64
         provenance: false
   httpApi:
     cors: true
-  # CloudFormation stack tags
   stackTags:
     Project: aws-mcp-examples
     Environment: ${self:provider.stage}
@@ -29,15 +31,34 @@ plugins:
   - serverless-offline
 
 custom:
-  # Serverless Offline configuration
   serverless-offline:
     httpPort: 3000
     host: 0.0.0.0
 
 functions:
-  expressApp:
-    description: Express application with XYZ endpoints using AWS Lambda Web Adapter
+#  expressApp:
+#    description: Express application with XYZ endpoints using AWS Lambda Web Adapter
+#    timeout: 30
+#    memorySize: 512
+#    image:
+#      name: appimage
+#    role:
+#      - McpLambdaRole
+#    events:
+#      - httpApi:
+#          path: /
+#          method: '*'
+#      - httpApi:
+#          path: /{proxy+}
+#          method: '*'
+#    environment:
+#      PORT: 8080
+
+  mcpApp:
+    description: MCP application using AWS Lambda Web Adapter
     timeout: 30
+#    provisionedConcurrency: 1
+#    reservedConcurrency: 1
     memorySize: 512
     image:
       name: appimage
@@ -48,10 +69,20 @@ functions:
           path: /
           method: '*'
       - httpApi:
-          path: /{proxy+}
-          method: '*'
+          path: /mcp
+          method: get
+      - httpApi:
+          path: /mcp
+          method: post
+      - httpApi:
+          path: /mcp
+          method: delete
     environment:
       PORT: 8080
+      RUST_LOG: info
+      RUST_BACKTRACE: 1
+#      AWS_LWA_INVOKE_MODE: response_stream
+    url: true
 
 # CloudFormation resource outputs
 resources:
@@ -82,5 +113,3 @@ resources:
                     - logs:PutLogEvents
                   Resource:
                     - Fn::Sub: 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
-
-
