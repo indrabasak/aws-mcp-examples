@@ -1,5 +1,4 @@
 FROM public.ecr.aws/docker/library/node:20-slim
-#FROM public.ecr.aws/lambda/nodejs:20
 
 # Copy Lambda Web Adapter
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
