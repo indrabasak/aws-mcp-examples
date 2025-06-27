@@ -1,6 +1,6 @@
 service: mcp-examples
 
-frameworkVersion: '3'
+frameworkVersion: '4.13.0'
 
 provider:
   name: aws

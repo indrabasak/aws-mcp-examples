@@ -1,0 +1,99 @@
+service: mcp-ecs-example
+
+frameworkVersion: '4.13.0'
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: us-west-2
+  architecture: x86_64
+  timeout: 30
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    STAGE: ${self:provider.stage}
+  cfnRole: arn:aws:iam::${aws:accountId}:role/AdskCfnAdministratorAccessExecutionRole
+  ecr:
+    images:
+      appimage:
+        path: ./
+        file: Dockerfile.ecs
+        platform: linux/x86_64
+  stackTags:
+    Project: aws-mcp-examples
+    Environment: ${self:provider.stage}
+
+custom:
+  config: ${file(environments/${self:provider.region}/${opt:stage, self:provider.stage, 'dev'}.yml)}
+
+plugins:
+  - serverless-fargate
+
+fargate:
+  clusterName: "${self:service}-cluster"
+  containerInsights: true
+  memory: '0.5GB'
+  cpu: 256
+  architecture: X86_64
+  vpc:
+    securityGroupIds:
+      - Ref: FargateSecurityGroup
+    subnetIds: "${self:custom.config.subnetIds}"
+
+  tasks:
+    service-task:
+      image: appimage
+
+resources:
+  - ${file(resources/ecs/sg.yml)}
+  - ${file(resources/ecs/alb.yml)}
+
+#  Resources:
+#    McpRole:
+#      Type: AWS::IAM::Role
+#      Properties:
+#        RoleName: !Sub "${self:service}-role-${AWS::Region}"
+#        AssumeRolePolicyDocument:
+#          Version: "2012-10-17"
+#          Statement:
+#            - Effect: Allow
+#              Principal:
+#                Service:
+#                  - lambda.amazonaws.com
+#              Action: sts:AssumeRole
+#        ManagedPolicyArns:
+#          - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+#        Policies:
+#          - PolicyName: ${self:service}-mcp-logs
+#            PolicyDocument:
+#              Version: "2012-10-17"
+#              Statement:
+#                - Effect: Allow
+#                  Action:
+#                    - logs:CreateLogGroup
+#                    - logs:CreateLogStream
+#                    - logs:PutLogEvents
+#                  Resource:
+#                    - Fn::Sub: 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+#
+#    FargateSecurityGroup:
+#      Type: AWS::EC2::SecurityGroup
+#      Properties:
+#        GroupName: !Sub "${self:service}-ecs-sg"
+#        GroupDescription: Allow all outbound traffic, no inbound
+#        SecurityGroupIngress:
+#          - IpProtocol: tcp
+#            FromPort: 80
+#            ToPort: 8080
+#            CidrIp: 10.0.0.0/8
+#            Description: HTTP
+#          - IpProtocol: tcp
+#            FromPort: 443
+#            ToPort: 8080
+#            CidrIp: 10.0.0.0/8
+#            Description: HTTPS
+#        SecurityGroupEgress:
+#          - IpProtocol: -1
+#            FromPort: 0
+#            ToPort: 0
+#            CidrIp: 0.0.0.0/0
+#        VpcId: vpc-0c18bd5751b48a717

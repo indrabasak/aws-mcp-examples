@@ -1,0 +1,62 @@
+Resources:
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: 120
+      Name: !Sub "${self:service}-lb"
+      Scheme: internal
+      SecurityGroups:
+        - !Ref FargateSecurityGroup
+      Subnets: "${self:custom.config.subnetIds}"
+      Tags:
+        - Key: "adsk:moniker"
+          Value: "${self:custom.config.moniker}"
+
+#  ListenerHTTP:
+#    Type: AWS::ElasticLoadBalancingV2::Listener
+#    Properties:
+#      DefaultActions:
+#        - FixedResponseConfig:
+#            ContentType: text/plain
+#            MessageBody: Not Implemented
+#            StatusCode: 404
+#          Type: fixed-response
+#      LoadBalancerArn: !Ref LoadBalancer
+#      Port: 80
+#      Protocol: HTTP
+
+#  TargetGroup:
+#    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+#    Properties:
+#      HealthCheckEnabled: false
+#      Name: MyTargets
+#      TargetType: lambda
+#      Targets:
+#        - Id: !GetAtt [ MyLambdaFunction, Arn ]
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 6
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      TargetType: ip
+      Name: 'service-task'
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId: "${self:custom.config.vpcId}"
+
+  ListenerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: 'forward'
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP

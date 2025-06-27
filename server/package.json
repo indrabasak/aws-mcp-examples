@@ -1,0 +1,56 @@
+{
+  "name": "aws-mcp-server-examples",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AWS MCP Server Examples",
+  "author": "Indra Basak",
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "watch": "../node_modules/.bin/tsc -w",
+    "deploy": "BUILDX_NO_DEFAULT_ATTESTATIONS=1 serverless deploy",
+    "deploy:dev": "../node_modules/.bin/serverless deploy --stage dev",
+    "deploy:poc": "../node_modules/.bin/serverless deploy --stage poc",
+    "deploy:ecs:poc": "../node_modules/.bin/serverless deploy -c serverless.ecs.yml --stage poc",
+    "remove:ecs:poc": "../node_modules/.bin/serverless remove -c serverless.ecs.yml --stage poc",
+    "remove": "../node_modules/.bin/serverless remove",
+    "test": "../node_modules/.bin/jest",
+    "test:watch": "../node_modules/.bin/jest --watch",
+    "local": "../node_modules/.bin/serverless offline",
+    "lint": "../node_modules/.bin/eslint src/**/*.ts",
+    "lint:fix": "../node_modules/.bin/eslint src/**/*.ts --fix",
+    "run:stateful": "node ./dist/greet/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.24.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^9.25.1",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jest": "^28.11.0",
+    "eslint-plugin-prettier": "^5.2.6",
+    "eslint-plugin-stylistic": "^0.0.0-0",
+    "jest": "^29.7.0",
+    "prettier": "^3.5.3",
+    "serverless": "^4.17.1",
+    "serverless-fargate": "^0.0.12",
+    "serverless-offline": "^13.3.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2"
+  },
+  "packageManager": "yarn@1.22.19",
+  "keywords": [
+    "aws",
+    "lambda",
+    "serverless",
+    "typescript",
+    "mcp"
+  ]
+}

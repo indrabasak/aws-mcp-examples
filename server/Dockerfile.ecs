@@ -8,28 +8,25 @@ EXPOSE 8080
 ## Set the working directory
 WORKDIR "/var/task"
 
-## Enable Corepack for Yarn 4 support
-RUN corepack enable
-
-#RUN npm install -g yarn
-
-# Install TypeScript globally
-RUN npm install -g typescript
+RUN corepack enable && \
+  npm install -g typescript
 
 # Copy TypeScript configuration and source files
-COPY tsconfig.json ./
-COPY src ./src
+COPY tsconfig.json    \
+     package.json         \
+     yarn.lock          \
+     ./
 
-# Copy package management files
-COPY package.json ./
-COPY yarn.lock ./
+COPY src ./src
 
 ## Install all dependencies (including dev dependencies for building)
 RUN yarn install
-
-# Build the TypeScript code
 RUN yarn build
 
-# Set the Lambda handler
-#CMD ["node", "dist/simple-app"]
-CMD ["node", "dist/server/greet/stateless-index.js"]
+RUN yarn install --immutable && \
+  yarn cache clean && \
+  rm -rf .yarn/cache .yarn/unplugged .yarn/build-state.yml .yarn/install-state.gz && \
+  rm -f package.json yarn.lock .yarnrc.yml && \
+  rm -rf .yarn
+
+CMD ["node", "dist/greet/index.js"]

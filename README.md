@@ -154,3 +154,8 @@ docker build -t myapp:v1.0 .
 docker run -ti myapp:v1.0 sh
 docker run --rm -p 8080:8080 myapp:v1.0
 node --env-file .env.local dist/client/greet/greet-streamable-client.js
+
+docker build -f ./Dockerfile.ecs -t myapp2:v1.0 .
+
+sls deploy --debug -c serverless.ecs.yml
+sls deploy -c serverless.ecs.yml

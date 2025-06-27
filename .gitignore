@@ -19,7 +19,7 @@ coverage/
 
 # Environment variables
 .env
-.env.local
+client/.env.local
 .env.development.local
 .env.test.local
 .env.production.local
@@ -62,4 +62,4 @@ samconfig.toml
 
 # Temporary files
 tmp/
-temp/ 
+temp/

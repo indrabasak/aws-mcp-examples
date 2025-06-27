@@ -1,24 +1,15 @@
 {
-  "name": "aws-mcp-examples",
+  "name": "aws-mcp-client-examples",
   "version": "1.0.0",
   "type": "module",
-  "description": "AWS MCP Examples - TypeScript Serverless Application",
+  "description": "AWS MCP Client Examples",
   "author": "Indra Basak",
   "license": "MIT",
   "scripts": {
     "build": "rm -rf dist && tsc",
-    "watch": "tsc -w",
-    "deploy": "BUILDX_NO_DEFAULT_ATTESTATIONS=1 serverless deploy",
-    "deploy:dev": "serverless deploy --stage dev",
-    "deploy:prod": "serverless deploy --stage prod",
-    "remove": "serverless remove",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "local": "serverless offline",
-    "start:express": "tsc && node dist/src/server.js",
-    "dev:express": "tsc -w & node dist/src/server.js",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix"
+    "lint": "../node_modules/.bin/eslint src/**/*.ts",
+    "lint:fix": "../node_modules/.bin/eslint src/**/*.ts --fix",
+    "run:greet":  "node --env-file .env.local dist/greet/greet-streamable-client.js"
   },
   "dependencies": {
     "@azure/identity": "^4.10.1",
@@ -26,9 +17,7 @@
     "@langchain/langgraph": "^0.3.2",
     "@langchain/mcp-adapters": "^0.5.2",
     "@langchain/openai": "^0.5.13",
-    "@modelcontextprotocol/sdk": "^1.12.3",
     "dotenv": "^16.5.0",
-    "express": "^5.1.0",
     "zod": "^3.25.67"
   },
   "devDependencies": {
@@ -45,17 +34,14 @@
     "eslint-plugin-stylistic": "^0.0.0-0",
     "jest": "^29.7.0",
     "prettier": "^3.5.3",
-    "serverless": "^3.38.0",
-    "serverless-fargate-plugin": "^2.0.0",
+    "serverless": "^4.17.1",
+    "serverless-fargate": "^0.0.12",
     "serverless-offline": "^13.3.0",
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
   },
   "packageManager": "yarn@1.22.19",
   "keywords": [
-    "aws",
-    "lambda",
-    "serverless",
     "typescript",
     "mcp"
   ]

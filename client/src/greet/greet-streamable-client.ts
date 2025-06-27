@@ -5,7 +5,7 @@ export class StreamableHelloClient extends StreamableClient {
     super(
       'Greet Streamable Hello Client',
       '1.0.0',
-      'https://2wpusa07k4.execute-api.us-west-2.amazonaws.com/mcp'
+      'http://localhost:8080/mcp'
     );
   }
 }

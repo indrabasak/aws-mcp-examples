@@ -1,0 +1,6 @@
+moniker: 1234567B-C-UW2
+subnetIds:
+  - subnet-0dc524c9a2fd59855
+  - subnet-04b77e58818575f2d
+  - subnet-001a1fd737130aea9
+vpcId: vpc-0c18bd5751b48a717
