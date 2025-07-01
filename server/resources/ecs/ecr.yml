@@ -1,0 +1,8 @@
+Resources:
+  Repository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub '${self:service}-repo'
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'

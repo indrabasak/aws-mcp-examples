@@ -1,0 +1,189 @@
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${self:service}-cluster'
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
+
+  # This is a role that is used within Fargate to allow the Fargate agent
+  # to download images, and upload logs.
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ['sts:AssumeRole']
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Path: /
+      # This role enables basic features of ECS. See reference:
+      # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-iam-awsmanpol.html#security-iam-awsmanpol-AmazonECSTaskExecutionRolePolicy
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${self:service}-service'
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      ContainerDefinitions:
+        - Name: !Sub '${self:service}-service'
+          Cpu: 256
+          Memory: 512
+          Image: !Sub '${aws:accountId}.dkr.ecr.${aws:region}.amazonaws.com/serverless-${self:service}-${self:provider.stage}:appimage'
+          PortMappings:
+            - ContainerPort: 8080
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
+
+  # The service. The service is a resource which allows you to run multiple
+  # copies of a type of task, and gather up their logs and metrics, as well
+  # as monitor the number of running tasks and replace any that have crashed
+  Service:
+    Type: AWS::ECS::Service
+    # Avoid race condition between ECS service creation and associating
+    # the target group with the LB
+    DependsOn: PublicLoadBalancerListener
+    Properties:
+      ServiceName: !Sub '${self:service}-service'
+      Cluster: !Sub '${self:service}-cluster'
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+#          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref ServiceSecurityGroup
+          Subnets: '${self:custom.config.subnetIds}'
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      DesiredCount: 1
+      TaskDefinition: !Ref TaskDefinition
+      LoadBalancers:
+        - ContainerName: !Sub '${self:service}-service'
+          ContainerPort: 8080
+          TargetGroupArn: !Ref ServiceTargetGroup
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
+
+  # Security group that limits network access
+  # to the task
+  ServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for service
+      VpcId: '${self:custom.config.vpcId}'
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
+
+  # Keeps track of the list of tasks for the service
+  ServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 6
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      TargetType: ip
+      Port: 8080
+      Protocol: HTTP
+      UnhealthyThresholdCount: 10
+      VpcId: '${self:custom.config.vpcId}'
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 0
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
+
+  # A public facing load balancer, this is used as ingress for
+  # public facing internet traffic.
+  PublicLoadBalancerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the public facing load balancer
+      VpcId: '${self:custom.config.vpcId}'
+      SecurityGroupIngress:
+        # Allow access to public facing ALB from any IP address
+#        - CidrIp: 0.0.0.0/0
+#          IpProtocol: -1
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIpv6: ::/0
+          Description: 'Allow communication to/from Load balancer port'
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 10.0.0.0/8
+          Description: 'Allow communication to/from Load balancer port'
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
+
+  PublicLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internal
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '30'
+      Subnets: '${self:custom.config.subnetIds}'
+      SecurityGroups:
+        - !Ref PublicLoadBalancerSG
+
+  PublicLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: 'forward'
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref ServiceTargetGroup
+                Weight: 100
+      LoadBalancerArn: !Ref 'PublicLoadBalancer'
+      Port: 80
+      Protocol: HTTP
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
+
+  # Open up the service's security group to traffic originating
+  # from the security group of the load balancer.
+  ServiceIngressfromLoadBalancer:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Ingress from the public ALB
+      GroupId: !Ref ServiceSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref 'PublicLoadBalancerSG'
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
+
+  # This log group stores the stdout logs from this service's containers
+#  LogGroup:
+#    Type: AWS::Logs::LogGroup

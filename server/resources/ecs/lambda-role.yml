@@ -1,0 +1,27 @@
+Resources:
+  DummyLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${self:service}-dummy-lambda-role-${AWS::Region}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: ${self:service}-mcp-logs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - Fn::Sub: 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'

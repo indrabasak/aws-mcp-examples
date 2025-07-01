@@ -18,6 +18,7 @@ provider:
         path: ./
         file: Dockerfile.ecs
         platform: linux/x86_64
+        provenance: false
   stackTags:
     Project: aws-mcp-examples
     Environment: ${self:provider.stage}
@@ -25,27 +26,55 @@ provider:
 custom:
   config: ${file(environments/${self:provider.region}/${opt:stage, self:provider.stage, 'dev'}.yml)}
 
-plugins:
-  - serverless-fargate
+functions:
+  dummyApp:
+    description: MCP application using AWS Lambda Web Adapter
+    timeout: 30
+    memorySize: 512
+    image:
+      name: appimage
+    role:
+      - DummyLambdaRole
+    events:
+      - httpApi:
+          path: /
+          method: '*'
+      - httpApi:
+          path: /mcp
+          method: get
+      - httpApi:
+          path: /mcp
+          method: post
+      - httpApi:
+          path: /mcp
+          method: delete
+    environment:
+      PORT: 8080
+      RUST_LOG: info
 
-fargate:
-  clusterName: "${self:service}-cluster"
-  containerInsights: true
-  memory: '0.5GB'
-  cpu: 256
-  architecture: X86_64
-  vpc:
-    securityGroupIds:
-      - Ref: FargateSecurityGroup
-    subnetIds: "${self:custom.config.subnetIds}"
+#plugins:
+#  - serverless-fargate
 
-  tasks:
-    service-task:
-      image: appimage
+#fargate:
+#  clusterName: "${self:service}-cluster"
+#  containerInsights: true
+#  memory: '0.5GB'
+#  cpu: 256
+#  architecture: X86_64
+#  vpc:
+#    securityGroupIds:
+#      - Ref: FargateSecurityGroup
+#    subnetIds: "${self:custom.config.subnetIds}"
+#
+#  tasks:
+#    service-task:
+#      image: appimage
 
 resources:
-  - ${file(resources/ecs/sg.yml)}
-  - ${file(resources/ecs/alb.yml)}
+#  - ${file(resources/ecs/sg.yml)}
+#  - ${file(resources/ecs/alb.yml)}
+  - ${file(resources/ecs/lambda-role.yml)}
+  - ${file(resources/ecs/cluster.yml)}
 
 #  Resources:
 #    McpRole:

@@ -2,10 +2,11 @@ import { StreamableClient } from '../util/streamable-client.js';
 
 export class StreamableHelloClient extends StreamableClient {
   constructor() {
+    // super('Greet Streamable Hello Client', '1.0.0', 'http://localhost:8080/mcp');
     super(
       'Greet Streamable Hello Client',
       '1.0.0',
-      'http://localhost:8080/mcp'
+      'http://internal-mcp-ec-publi-i9eohj72hvcw-758919476.us-west-2.elb.amazonaws.com/mcp'
     );
   }
 }
