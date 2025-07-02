@@ -1,4 +1,5 @@
 import { StreamableClient } from '../util/streamable-client.js';
+import 'dotenv/config';
 
 export class StreamableHelloClient extends StreamableClient {
   constructor() {
@@ -6,7 +7,7 @@ export class StreamableHelloClient extends StreamableClient {
     super(
       'Greet Streamable Hello Client',
       '1.0.0',
-      'http://internal-mcp-ec-publi-i9eohj72hvcw-758919476.us-west-2.elb.amazonaws.com/mcp'
+      process.env.MCP_SERVER_URL || 'http://localhost:8080/mcp'
     );
   }
 }

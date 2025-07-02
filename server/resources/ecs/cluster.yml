@@ -63,7 +63,7 @@ Resources:
     Type: AWS::ECS::Service
     # Avoid race condition between ECS service creation and associating
     # the target group with the LB
-    DependsOn: PublicLoadBalancerListener
+    DependsOn: LoadBalancerListener
     Properties:
       ServiceName: !Sub '${self:service}-service'
       Cluster: !Sub '${self:service}-cluster'
@@ -121,7 +121,7 @@ Resources:
 
   # A public facing load balancer, this is used as ingress for
   # public facing internet traffic.
-  PublicLoadBalancerSG:
+  LoadBalancerSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Access to the public facing load balancer
@@ -144,18 +144,22 @@ Resources:
         - Key: 'adsk:moniker'
           Value: '${self:custom.config.moniker}'
 
-  PublicLoadBalancer:
+  LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
+      Name: !Sub '${self:service}-lb'
       Scheme: internal
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
           Value: '30'
       Subnets: '${self:custom.config.subnetIds}'
       SecurityGroups:
-        - !Ref PublicLoadBalancerSG
+        - !Ref LoadBalancerSG
+      Tags:
+        - Key: 'adsk:moniker'
+          Value: '${self:custom.config.moniker}'
 
-  PublicLoadBalancerListener:
+  LoadBalancerListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
@@ -164,7 +168,7 @@ Resources:
             TargetGroups:
               - TargetGroupArn: !Ref ServiceTargetGroup
                 Weight: 100
-      LoadBalancerArn: !Ref 'PublicLoadBalancer'
+      LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
       Tags:
@@ -179,7 +183,7 @@ Resources:
       Description: Ingress from the public ALB
       GroupId: !Ref ServiceSecurityGroup
       IpProtocol: -1
-      SourceSecurityGroupId: !Ref 'PublicLoadBalancerSG'
+      SourceSecurityGroupId: !Ref LoadBalancerSG
       Tags:
         - Key: 'adsk:moniker'
           Value: '${self:custom.config.moniker}'

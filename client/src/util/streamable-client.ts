@@ -38,6 +38,7 @@ export class StreamableClient {
     });
 
     console.log('------------------- 1 --------------');
+    console.log('Connecting to MCP server at:', url);
     this.transport = new StreamableHTTPClientTransport(new URL(url), {
       sessionId: this.sessionId
     });
