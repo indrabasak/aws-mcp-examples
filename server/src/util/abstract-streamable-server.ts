@@ -38,7 +38,7 @@ export abstract class AbstractStreamableServer {
       console.log(`[Server] Transport disconnected: ${transport.sessionId}`);
     });
 
-    expressServer.on('request', (request, transport) => {
+    expressServer.on('request', (request) => {
       // console.log(transport);
       console.log(`[Server] Received request: ${request.method} from transport`);
     });
